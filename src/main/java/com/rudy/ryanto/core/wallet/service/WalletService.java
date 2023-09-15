@@ -9,7 +9,6 @@ import com.rudy.ryanto.core.wallet.repository.WalletHistoryRepository;
 import com.rudy.ryanto.core.wallet.repository.WalletMasterRepository;
 import com.rudy.ryanto.core.wallet.util.SeqGenerator;
 import com.rudy.ryanto.core.wallet.util.WalletConstant;
-import io.lettuce.core.protocol.CommandExpiryWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Lock;

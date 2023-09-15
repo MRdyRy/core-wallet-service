@@ -17,7 +17,9 @@ public class WalletConstant {
         SALDO_TIDA_MENCUKUPI("X1","Saldo tidak mencukupi!"),
         GENERAL_ERROR("01","Terjadi kesalahan, General Error!"),
         FAILED_GENERATE_NOREK("02","Gagal Generate Norek!!"),
-        DATA_NOT_FOUND("03","Data tidak ditemukan!");
+        DATA_NOT_FOUND("03","Data tidak ditemukan!"),
+        INVALID_AMOUNT("04","Nominal Amount tidak valid!"),
+        PARAMETER_NOT_FOUND("05","Parameter Not Found!");
 
         private String codeOps=null,description=null;
 
@@ -55,11 +57,36 @@ public class WalletConstant {
         }
     }
 
+
+    public enum CACHES_WALLET{
+        MIN_SISA_SALDO("MINIMAL_SISA_SALDO","Minimal sisa saldo rek dalam rupiah"),
+        MAX_TRANSACTION_TIER_A("MAX_TRX_TIER_A","Maximum amount transaksi untuk tier A"),
+        MAX_TRANSACTION_TIER_B("MAX_TRX_TIER_B","Maximum amount transaksi untuk tier B");
+
+
+        private String cacheName=null;
+        private String desc=null;
+
+        private CACHES_WALLET(String cacheName, String desc){
+            this.cacheName = cacheName;
+            this.desc = desc;
+        }
+
+        public String getCacheName() {
+            return this.cacheName;
+        }
+
+        public String getDesc() {
+            return this.desc;
+        }
+    }
+
     public enum GENERATE_TYPE{
         NOREK, USER_ID
     }
 
     public static final String TITLE_REK = "REKENING_WALLET : ";
+    public static final String AUDIT_TOPIC = "audit-topic";
 
 
 }

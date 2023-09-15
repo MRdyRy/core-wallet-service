@@ -9,9 +9,11 @@ import com.rudy.ryanto.core.wallet.repository.WalletHistoryRepository;
 import com.rudy.ryanto.core.wallet.repository.WalletMasterRepository;
 import com.rudy.ryanto.core.wallet.util.SeqGenerator;
 import com.rudy.ryanto.core.wallet.util.WalletConstant;
+import io.lettuce.core.protocol.CommandExpiryWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,10 @@ public class WalletService {
 
     @Autowired
     private SeqGenerator seqGenerator;
+
+    @Autowired
+    private RedisTemplate<?,?> redisTemplate;
+
 
 
     public WalletRes doCreateNew(WalletReq req, HttpServletRequest servletRequest) {
@@ -102,14 +108,30 @@ public class WalletService {
     }
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Transactional
+    @Transactional( readOnly = false )
     public WalletRes doUpdateBalance(WalletReq req, HttpServletRequest servletRequest) {
         log.info("updating ballance : {}",req);
         WalletRes res;
         try {
             var master = walletMasterRepository.findByUserId(req.getUserId());
-            if(null==master)
+            if(null==master){
+                log.error("master wallet not found !");
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.DATA_NOT_FOUND.getDescription());
+            }
+            if(null!=req.getAmount() && req.getAmount().compareTo(BigDecimal.ZERO)<=0){
+                log.error("Invalid request amount is {} ",req.getAmount());
+                throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.INVALID_AMOUNT.getDescription());
+            }
+            BigDecimal minSisaSaldoAfterTrx = (BigDecimal) redisTemplate.opsForValue().get(WalletConstant.CACHES_WALLET.MIN_SISA_SALDO.getCacheName());
+            if(null==minSisaSaldoAfterTrx || minSisaSaldoAfterTrx.compareTo(BigDecimal.ZERO)==0){
+                log.error("parameter SISA SALDO Not Found! Check Redis cache!");
+                throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.PARAMETER_NOT_FOUND.getDescription());
+            }
+            if(master.getSaldo().subtract(req.getAmount()).compareTo(minSisaSaldoAfterTrx)<0){
+                log.error("Sisa amount tidak kurang dengan parameter sisa saldo");
+                throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.INVALID_AMOUNT.getDescription());
+            }
+
             master.setSaldo(master.getSaldo().add(req.getAmount()));
             walletMasterRepository.save(master);
             res = WalletRes.builder()

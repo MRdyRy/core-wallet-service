@@ -5,6 +5,7 @@ import com.rudy.ryanto.core.wallet.repository.SeqRekRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.LockModeType;
 import java.util.Calendar;
@@ -23,6 +24,7 @@ public class SeqGenerator {
     }
 
     @Lock(LockModeType.WRITE)
+    @Transactional
     public String generateSequence(String userId) {
         String norek = "";
         try {

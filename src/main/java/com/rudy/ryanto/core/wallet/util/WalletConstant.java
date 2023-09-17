@@ -13,6 +13,12 @@ public class WalletConstant {
         INQUIRY, GET_HISTORY, PRINT
     }
 
+    public enum STAGES{
+        INQUIRY, SUBMIT, EXECUTE
+    }
+
+
+
     public enum ERROR_DESCRIPTION{
         SALDO_TIDA_MENCUKUPI("X1","Saldo tidak mencukupi!"),
         GENERAL_ERROR("01","Terjadi kesalahan, General Error!"),
@@ -88,5 +94,28 @@ public class WalletConstant {
     public static final String TITLE_REK = "REKENING_WALLET : ";
     public static final String AUDIT_TOPIC = "audit-topic";
 
+
+    public enum FLOW_WALLET{
+        CREATE_NEW("CREATE_NEW","CREATE NEW WALLET"),
+        GET_HISTORY("GET_HISTORY","GET HISTORY"),
+        UPDATE_BALANCE("UPDATE_BALANCE","UPDATE BALANCE"),
+        INQUIRY("INQUIRY","INQUIRY");
+
+        private String code=null;
+        private String desc=null;
+
+        private FLOW_WALLET(String code, String desc){
+            this.code = code;
+            this.desc = desc;
+        }
+
+        public String getCode() {
+            return this.code;
+        }
+
+        public String getDesc() {
+            return this.desc;
+        }
+    }
 
 }

@@ -1,5 +1,8 @@
 package com.rudy.ryanto.core.wallet.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rudy.ryanto.core.wallet.domain.AuditData;
 import com.rudy.ryanto.core.wallet.domain.WalletReq;
 import com.rudy.ryanto.core.wallet.domain.WalletRes;
 import com.rudy.ryanto.core.wallet.entity.MasterWallet;
@@ -38,95 +41,116 @@ public class WalletService {
     private SeqGenerator seqGenerator;
 
     @Autowired
-    private RedisTemplate<?,?> redisTemplate;
+    private RedisTemplate<?, ?> redisTemplate;
+
+    @Autowired
+    private AuditService auditService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
 
-
-    public WalletRes doCreateNew(WalletReq req, HttpServletRequest servletRequest) {
-        log.info("doCreateNew : {}",req);
+    public WalletRes doCreateNew(WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
+        log.info("doCreateNew : {}", req);
         WalletRes response = null;
-        try{
-            if(null==req)
+        try {
+            if (null == req)
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
-            walletMasterRepository.save(MasterWallet.builder()
-                            .norek(seqGenerator.generateSequence(String.valueOf(req.getUserId())))
-                            .createDate(LocalDateTime.now())
-                            .saldo(new BigDecimal(0))
-                            .currencyCode(WalletConstant.CURRENCY_CODE.IDR.getCode())
-                            .walletName(WalletConstant.TITLE_REK+req.getUserId())
-                            .description("")
+            var master = walletMasterRepository.save(MasterWallet.builder()
+                    .norek(seqGenerator.generateSequence(String.valueOf(req.getUserId())))
+                    .createDate(LocalDateTime.now())
+                    .saldo(new BigDecimal(0))
+                    .currencyCode(WalletConstant.CURRENCY_CODE.IDR.getCode())
+                    .walletName(WalletConstant.TITLE_REK + req.getUserId())
+                    .description("")
                     .build());
-        }catch (Exception e ){
-            log.error("error caused :",e);
+            response.setMasterWallet(master);
+        } catch (Exception e) {
+            log.error("error caused :", e);
             throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
-        }finally {
-
+        } finally {
+            doSendAudit(String.valueOf(WalletConstant.STAGES.SUBMIT), WalletConstant.FLOW_WALLET.CREATE_NEW.getCode(), req, response, new BigDecimal(0));
         }
         return response;
     }
 
     @Transactional(readOnly = true)
-    public WalletRes doInquiry(WalletReq req, HttpServletRequest servletRequest) {
-        log.info("do inquiry : {}",req);
-        WalletRes res;
-        try{
+    public WalletRes doInquiry(WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
+        log.info("do inquiry : {}", req);
+        WalletRes res = null;
+        try {
             var master = walletMasterRepository.findByUserId(req.getUserId());
-            if(null==master)
+            if (null == master)
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.DATA_NOT_FOUND.getDescription());
             res = WalletRes.builder()
                     .masterWallet(master)
                     .build();
-        }catch (Exception e){
-            log.error("error causde : ",e);
+        } catch (Exception e) {
+            log.error("error causde : ", e);
             throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
+        } finally {
+            doSendAudit(WalletConstant.STAGES.INQUIRY.name(), WalletConstant.FLOW_WALLET.INQUIRY.getCode(), req, res, null);
         }
 
         return res;
     }
 
+    private void doSendAudit(String stage, String flow, WalletReq req, WalletRes res, BigDecimal amount) throws JsonProcessingException {
+        auditService.sendAudit(AuditData.builder()
+                .userId(String.valueOf(req.getUserId()))
+                .amount(String.valueOf(amount))
+                .stage(stage)
+                .flowName(flow)
+                .optionalDetailsData(objectMapper.writeValueAsString(req))
+                .optionalDetailsData2(objectMapper.writeValueAsString(res))
+                .build());
+    }
+
     @Transactional(readOnly = true)
-    public WalletRes getHistory(WalletReq req, HttpServletRequest servletRequest) {
-        log.info("get history : {}",req);
-        WalletRes res;
+    public WalletRes getHistory(WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
+        log.info("get history : {}", req);
+        WalletRes res = null;
         try {
             var history = walletHistoryRepository.findByWalletId(req.getId());
-            if(null==history)
+            if (null == history)
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.DATA_NOT_FOUND.getDescription());
             var detail = walletHistoryDetailRepository.findByIdMaster(history.getId());
-            if(null==detail)
+            if (null == detail)
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.DATA_NOT_FOUND.getDescription());
             res = WalletRes.builder()
                     .walletHistory(history)
                     .walletHistoryDetail(detail)
                     .build();
-        }catch (Exception e){
-            log.error("error caused : ",e);
+        } catch (Exception e) {
+            log.error("error caused : ", e);
             throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
+        } finally {
+            doSendAudit(WalletConstant.STAGES.INQUIRY.name(), WalletConstant.FLOW_WALLET.GET_HISTORY.getCode(), req, res, null);
         }
         return res;
     }
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Transactional( readOnly = false )
-    public WalletRes doUpdateBalance(WalletReq req, HttpServletRequest servletRequest) {
-        log.info("updating ballance : {}",req);
-        WalletRes res;
+    @Transactional(readOnly = false)
+    public WalletRes doUpdateBalance(WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
+        log.info("updating ballance : {}", req);
+        WalletRes res = null;
         try {
             var master = walletMasterRepository.findByUserId(req.getUserId());
-            if(null==master){
+            if (null == master) {
                 log.error("master wallet not found !");
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.DATA_NOT_FOUND.getDescription());
             }
-            if(null!=req.getAmount() && req.getAmount().compareTo(BigDecimal.ZERO)<=0){
-                log.error("Invalid request amount is {} ",req.getAmount());
+            if (null != req.getAmount() && req.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                log.error("Invalid request amount is {} ", req.getAmount());
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.INVALID_AMOUNT.getDescription());
             }
             BigDecimal minSisaSaldoAfterTrx = (BigDecimal) redisTemplate.opsForValue().get(WalletConstant.CACHES_WALLET.MIN_SISA_SALDO.getCacheName());
-            if(null==minSisaSaldoAfterTrx || minSisaSaldoAfterTrx.compareTo(BigDecimal.ZERO)==0){
+            if (null == minSisaSaldoAfterTrx || minSisaSaldoAfterTrx.compareTo(BigDecimal.ZERO) == 0) {
                 log.error("parameter SISA SALDO Not Found! Check Redis cache!");
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.PARAMETER_NOT_FOUND.getDescription());
             }
-            if(master.getSaldo().subtract(req.getAmount()).compareTo(minSisaSaldoAfterTrx)<0){
+            if (master.getSaldo().subtract(req.getAmount()).compareTo(minSisaSaldoAfterTrx) < 0) {
                 log.error("Sisa amount tidak kurang dengan parameter sisa saldo");
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.INVALID_AMOUNT.getDescription());
             }
@@ -136,9 +160,11 @@ public class WalletService {
             res = WalletRes.builder()
                     .masterWallet(master)
                     .build();
-        }catch (Exception e){
-            log.error("Error caused : ",e);
+        } catch (Exception e) {
+            log.error("Error caused : ", e);
             throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
+        } finally {
+            doSendAudit(WalletConstant.STAGES.SUBMIT.name(), WalletConstant.FLOW_WALLET.UPDATE_BALANCE.getCode(), req, res, req.getAmount());
         }
         return res;
     }

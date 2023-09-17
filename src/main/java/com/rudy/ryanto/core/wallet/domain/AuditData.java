@@ -24,4 +24,7 @@ public class AuditData {
     private Date transactionDateTime;
 
     private String optionalDetailsData;
+    private String optionalDetailsData2;
+    private String stage;
+    private String flowName;
 }

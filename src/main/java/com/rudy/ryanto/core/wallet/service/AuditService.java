@@ -12,17 +12,24 @@ import org.springframework.stereotype.Service;
 public class AuditService {
 
     @Autowired
-    private KafkaTemplate kafkaTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
 
-    public <T> void sendAudit(T auditData){
-        log.info("send audit data : {}",auditData);
+    public <T> void sendAudit(T auditData) {
+        log.info("send audit data : {}", auditData);
         AuditData data = (AuditData) auditData;
-        try{
-            kafkaTemplate.send(WalletConstant.AUDIT_TOPIC,data);
+        try {
+            kafkaTemplate.send(WalletConstant.AUDIT_TOPIC, data);
             log.info("success send messaging audit !");
-        }catch (Exception e){
-            log.error("error send audit messaging, caused : ",e);
+        } catch (Exception e) {
+            log.error("error send audit messaging, caused : ", e);
+            if (!kafkaTemplate.inTransaction()) {
+                kafkaTemplate.destroy();
+            }
+        } finally {
+            if (!kafkaTemplate.inTransaction()) {
+                kafkaTemplate.destroy();
+            }
         }
     }
 }

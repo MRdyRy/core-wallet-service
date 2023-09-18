@@ -1,17 +1,16 @@
 package com.rudy.ryanto.core.wallet.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Date;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuditData {
+public class AuditData extends AuditTrail{
     private Long id;
     private String transactionId;
     private String transactionType;
@@ -27,4 +26,6 @@ public class AuditData {
     private String optionalDetailsData2;
     private String stage;
     private String flowName;
+    private String clientId;
+
 }

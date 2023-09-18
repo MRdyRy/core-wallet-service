@@ -37,4 +37,6 @@ public class WalletHistoryDetail {
     private BigDecimal debet;
     @Column(name = "CREDIT", precision = 2)
     private BigDecimal credit;
+    @Column(name = "SEQUENCE")
+    private int sequence;
 }

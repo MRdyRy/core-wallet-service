@@ -1,5 +1,6 @@
 package com.rudy.ryanto.core.wallet.util;
 
+import com.rudy.ryanto.core.wallet.entity.TblSeqRek;
 import com.rudy.ryanto.core.wallet.exception.CoreWalletException;
 import com.rudy.ryanto.core.wallet.repository.SeqRekRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,14 +34,21 @@ public class SeqGenerator {
             int year = calendar.get(Calendar.YEAR);
             String id = WalletConstant.GENERATE_TYPE.NOREK.name() + year + userId;
 
-            var temp = seqRekRepository.findById(id);
+            var temp = seqRekRepository.findByKey(id);
+            TblSeqRek tblSeq;
             if (temp.isPresent()) {
-                var tblSeq = temp.get();
+                tblSeq = temp.get();
                 var sequence = tblSeq.getSeq() + 1;
                 norek = year + sequence + userId;
                 tblSeq.setSeq(sequence);
-                seqRekRepository.save(tblSeq);
+            } else {
+                tblSeq = new TblSeqRek();
+                var sequence = 1;
+                norek = year + sequence + userId;
+                tblSeq.setKey(id);
+                tblSeq.setSeq(sequence);
             }
+            seqRekRepository.save(tblSeq);
 
         } catch (Exception e) {
             throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.FAILED_GENERATE_NOREK.getDescription());

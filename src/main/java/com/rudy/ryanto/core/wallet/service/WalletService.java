@@ -6,10 +6,12 @@ import com.rudy.ryanto.core.wallet.domain.AuditData;
 import com.rudy.ryanto.core.wallet.domain.WalletReq;
 import com.rudy.ryanto.core.wallet.domain.WalletRes;
 import com.rudy.ryanto.core.wallet.entity.MasterWallet;
+import com.rudy.ryanto.core.wallet.entity.WalletHistory;
 import com.rudy.ryanto.core.wallet.exception.CoreWalletException;
 import com.rudy.ryanto.core.wallet.repository.WalletHistoryDetailRepository;
 import com.rudy.ryanto.core.wallet.repository.WalletHistoryRepository;
 import com.rudy.ryanto.core.wallet.repository.WalletMasterRepository;
+import com.rudy.ryanto.core.wallet.util.HistoryGenerator;
 import com.rudy.ryanto.core.wallet.util.SeqGenerator;
 import com.rudy.ryanto.core.wallet.util.WalletConstant;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import javax.persistence.LockModeType;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Service
 @Slf4j
@@ -49,10 +52,13 @@ public class WalletService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private HistoryGenerator historyGenerator;
+
 
     public WalletRes doCreateNew(WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
         log.info("doCreateNew : {}", req);
-        WalletRes response = null;
+        WalletRes response = new WalletRes();
         try {
             if (null == req)
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
@@ -62,7 +68,8 @@ public class WalletService {
                     .saldo(new BigDecimal(0))
                     .currencyCode(WalletConstant.CURRENCY_CODE.IDR.getCode())
                     .walletName(WalletConstant.TITLE_REK + req.getUserId())
-                    .description("")
+                    .description(WalletConstant.TITLE_REK + req.getUserId() + " - " + req.getClientId())
+                    .createBy(req.getClientId())
                     .build());
             response.setMasterWallet(master);
         } catch (Exception e) {
@@ -103,6 +110,9 @@ public class WalletService {
                 .flowName(flow)
                 .optionalDetailsData(objectMapper.writeValueAsString(req))
                 .optionalDetailsData2(objectMapper.writeValueAsString(res))
+                .clientId(req.getClientId())
+                .createBy(req.getClientId())
+                .createDate(LocalDateTime.now())
                 .build());
     }
 
@@ -155,7 +165,25 @@ public class WalletService {
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.INVALID_AMOUNT.getDescription());
             }
 
+            var beforeSaldo = master.getSaldo();
             master.setSaldo(master.getSaldo().add(req.getAmount()));
+            var afterSaldo = master.getSaldo();
+            if (beforeSaldo.compareTo(afterSaldo) != 0) {
+                var masterHistory = walletHistoryRepository.save(WalletHistory.builder()
+                        .createBy(req.getClientId())
+                        .createDate(new Date())
+                        .walletId(master.getId())
+                        .status(WalletConstant.HISTORY_STATUS.NORMAL)
+                        .description(WalletConstant.FLOW_WALLET.UPDATE_BALANCE.getDesc())
+                        .build());
+                historyGenerator.doAccountingCredit(req.getNorek(), true, req.getAmount(), masterHistory);
+                historyGenerator.doAccountingDebit(req.getNorek(), true, req.getAmount(), masterHistory);
+                var isSuccess = historyGenerator.doPost();
+                if (!isSuccess) {
+                    log.error("failed to save detail ! ");
+                    throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
+                }
+            }
             walletMasterRepository.save(master);
             res = WalletRes.builder()
                     .masterWallet(master)

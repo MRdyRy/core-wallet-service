@@ -109,7 +109,8 @@ public class HistoryGenerator {
                 walletHistoryDetailRepository.save(constructDetail(x, i.getAndIncrement()));
             });
         } catch (Exception e) {
-
+            log.error("failed to post accounting, caused  : ",e);
+            throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
         } finally {
             clearDebitCredit();
         }

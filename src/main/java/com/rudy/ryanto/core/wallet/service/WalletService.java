@@ -167,6 +167,7 @@ public class WalletService {
 
             var beforeSaldo = master.getSaldo();
             master.setSaldo(master.getSaldo().add(req.getAmount()));
+            walletMasterRepository.save(master);
             var afterSaldo = master.getSaldo();
             if (beforeSaldo.compareTo(afterSaldo) != 0) {
                 var masterHistory = walletHistoryRepository.save(WalletHistory.builder()
@@ -184,7 +185,6 @@ public class WalletService {
                     throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
                 }
             }
-            walletMasterRepository.save(master);
             res = WalletRes.builder()
                     .masterWallet(master)
                     .build();

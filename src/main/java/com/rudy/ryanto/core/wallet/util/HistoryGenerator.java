@@ -19,12 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class HistoryGenerator {
 
     public HistoryGenerator() {
-        synchronized (hashMapDebit) {
-            if (hashMapDebit == null) new HashMap<>();
-        }
-        synchronized (hashMapCredit) {
-            if (hashMapCredit == null) new HashMap<>();
-        }
+        clearDebitCredit();
     }
 
     @Autowired
@@ -42,8 +37,6 @@ public class HistoryGenerator {
             log.error("error accounting : ", e);
             clearDebitCredit();
             throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
-        } finally {
-            clearDebitCredit();
         }
 
         try {
@@ -58,8 +51,6 @@ public class HistoryGenerator {
             log.error("error processing : ", e);
             clearDebitCredit();
             throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
-        } finally {
-            clearDebitCredit();
         }
     }
 
@@ -71,8 +62,6 @@ public class HistoryGenerator {
             log.error("error accounting : ", e);
             clearDebitCredit();
             throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
-        } finally {
-            clearDebitCredit();
         }
 
         try {
@@ -87,8 +76,6 @@ public class HistoryGenerator {
             log.error("error processing : ", e);
             clearDebitCredit();
             throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
-        } finally {
-            clearDebitCredit();
         }
     }
 

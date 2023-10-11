@@ -94,7 +94,7 @@ public class WalletConstant {
 
     public static final String TITLE_REK = "REKENING_WALLET : ";
     public static final String AUDIT_TOPIC = "audit-topic";
-
+    public static final String SEQ_CACHE_KEY = "seq_cache";
 
     public enum FLOW_WALLET {
         CREATE_NEW("CREATE_NEW", "CREATE NEW WALLET"),

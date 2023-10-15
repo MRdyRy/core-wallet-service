@@ -5,10 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
+import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity(name = "WALLET_HISTORY_DETAIL")
@@ -26,6 +23,7 @@ public class WalletHistoryDetail {
      * 1        |   123     |   10.000  |   NULL    |
      * 2        |   456     | NULL      |   10.000  |
      */
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID",nullable = false)
     private Long id;

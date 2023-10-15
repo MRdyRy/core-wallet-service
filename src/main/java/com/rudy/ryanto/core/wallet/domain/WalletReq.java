@@ -2,11 +2,13 @@ package com.rudy.ryanto.core.wallet.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+@Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,4 +20,5 @@ public class WalletReq {
     private Long userId;
     private BigDecimal amount;
     private String clientId;
+    private String type;
 }

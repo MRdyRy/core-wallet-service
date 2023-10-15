@@ -6,10 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
+import javax.persistence.*;
 import java.util.Date;
 
 @Entity(name = "WALLET_HISTORY")
@@ -24,6 +21,7 @@ public class WalletHistory {
      * ID   |   WALLET_ID   |   DESCRIPTION     | STATUS    |
      * 1    |   123         |   TRANSFER TO 456 |   SUCCESS |
      */
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID",nullable = false)
     private Long id;

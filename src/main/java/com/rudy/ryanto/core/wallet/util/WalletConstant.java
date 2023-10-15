@@ -119,4 +119,27 @@ public class WalletConstant {
         }
     }
 
+
+
+    public enum TYPE {
+        ADD("ADD", "ADD VALUE TO EXISTING"),
+        SUB("SUB","SUBTRACT FROM EXISTING");
+
+        private String code = null;
+        private String desc = null;
+
+        private TYPE(String code, String desc) {
+            this.code = code;
+            this.desc = desc;
+        }
+
+        public String getCode() {
+            return this.code;
+        }
+
+        public String getDesc() {
+            return this.desc;
+        }
+    }
+
 }

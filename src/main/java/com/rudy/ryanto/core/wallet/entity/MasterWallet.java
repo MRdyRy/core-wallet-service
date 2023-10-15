@@ -23,6 +23,7 @@ public class MasterWallet {
      */
 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
     @Column(name = "ID",nullable = false)
     private Long id;
     @Column(name = "WALLET_NAME", nullable = false)
@@ -39,7 +40,7 @@ public class MasterWallet {
     private WalletConstant.STATUS status;
     private String description;
     @Temporal(TemporalType.TIMESTAMP)
-    private LocalDateTime createDate;
+    private Date createDate;
     @Temporal(TemporalType.TIMESTAMP)
     private Date updateDate;
     private String createBy;

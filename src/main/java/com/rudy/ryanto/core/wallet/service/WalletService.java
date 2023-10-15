@@ -20,6 +20,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.LockModeType;
 import javax.servlet.http.HttpServletRequest;
@@ -44,7 +45,7 @@ public class WalletService {
     private SeqGenerator seqGenerator;
 
     @Autowired
-    private RedisTemplate<?, ?> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     private AuditService auditService;
@@ -56,7 +57,7 @@ public class WalletService {
     private HistoryGenerator historyGenerator;
 
 
-    public WalletRes doCreateNew(WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
+    public WalletRes doCreateNew(WalletReq req) throws JsonProcessingException {
         log.info("doCreateNew : {}", req);
         WalletRes response = new WalletRes();
         try {
@@ -64,11 +65,12 @@ public class WalletService {
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
             var master = walletMasterRepository.save(MasterWallet.builder()
                     .norek(seqGenerator.generateSequence(String.valueOf(req.getUserId())))
-                    .createDate(LocalDateTime.now())
+                    .createDate(new Date())
                     .saldo(new BigDecimal(0))
                     .currencyCode(WalletConstant.CURRENCY_CODE.IDR.getCode())
                     .walletName(WalletConstant.TITLE_REK + req.getUserId())
                     .description(WalletConstant.TITLE_REK + req.getUserId() + " - " + req.getClientId())
+                    .status(WalletConstant.STATUS.ACTIVE)
                     .createBy(req.getClientId())
                     .build());
             response.setMasterWallet(master);
@@ -82,7 +84,7 @@ public class WalletService {
     }
 
     @Transactional(readOnly = true)
-    public WalletRes doInquiry(WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
+    public WalletRes doInquiry(WalletReq req) throws JsonProcessingException {
         log.info("do inquiry : {}", req);
         WalletRes res = null;
         try {
@@ -117,7 +119,7 @@ public class WalletService {
     }
 
     @Transactional(readOnly = true)
-    public WalletRes getHistory(WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
+    public WalletRes getHistory(WalletReq req) throws JsonProcessingException {
         log.info("get history : {}", req);
         WalletRes res = null;
         try {
@@ -142,7 +144,7 @@ public class WalletService {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Transactional(readOnly = false)
-    public WalletRes doUpdateBalance(WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
+    public WalletRes doUpdateBalance(WalletReq req) throws JsonProcessingException {
         log.info("updating ballance : {}", req);
         WalletRes res = null;
         try {
@@ -155,18 +157,25 @@ public class WalletService {
                 log.error("Invalid request amount is {} ", req.getAmount());
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.INVALID_AMOUNT.getDescription());
             }
-            BigDecimal minSisaSaldoAfterTrx = (BigDecimal) redisTemplate.opsForValue().get(WalletConstant.CACHES_WALLET.MIN_SISA_SALDO.getCacheName());
+            var redis = redisTemplate.opsForValue();
+            BigDecimal minSisaSaldoAfterTrx = (BigDecimal) redis.get(WalletConstant.CACHES_WALLET.MIN_SISA_SALDO.getCacheName());
             if (null == minSisaSaldoAfterTrx || minSisaSaldoAfterTrx.compareTo(BigDecimal.ZERO) == 0) {
                 log.error("parameter SISA SALDO Not Found! Check Redis cache!");
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.PARAMETER_NOT_FOUND.getDescription());
             }
-            if (master.getSaldo().subtract(req.getAmount()).compareTo(minSisaSaldoAfterTrx) < 0) {
-                log.error("Sisa amount tidak kurang dengan parameter sisa saldo");
-                throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.INVALID_AMOUNT.getDescription());
+            var beforeSaldo = master.getSaldo();
+            if(!StringUtils.isEmpty(req.getType()) && req.getType().equalsIgnoreCase(WalletConstant.TYPE.SUB.getCode())){
+                var sisa = master.getSaldo().subtract(req.getAmount());
+                log.info("operation : {} saldo : {} param : {} sisa : {}",req.getType(),master.getSaldo(),minSisaSaldoAfterTrx,sisa);
+                if (sisa.compareTo(minSisaSaldoAfterTrx) < 0) {
+                    log.error("Sisa amount tidak kurang dengan parameter sisa saldo");
+                    throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.INVALID_AMOUNT.getDescription());
+                }
+                master.setSaldo(master.getSaldo().subtract(req.getAmount()));
+            }else{
+                master.setSaldo(master.getSaldo().add(req.getAmount()));
             }
 
-            var beforeSaldo = master.getSaldo();
-            master.setSaldo(master.getSaldo().add(req.getAmount()));
             walletMasterRepository.save(master);
             var afterSaldo = master.getSaldo();
             if (beforeSaldo.compareTo(afterSaldo) != 0) {

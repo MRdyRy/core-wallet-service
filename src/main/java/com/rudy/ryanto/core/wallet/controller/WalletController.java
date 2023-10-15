@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/wallet/v1")
+@RequestMapping("/api/wallet/v1")
 @Slf4j
 public class WalletController {
 
@@ -23,28 +23,28 @@ public class WalletController {
     @ResponseBody
     public WalletRes doCreate(@RequestBody WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
         log.info("/wallet/v1/create");
-        return walletService.doCreateNew(req, servletRequest);
+        return walletService.doCreateNew(req);
     }
 
     @PostMapping(value = "/inquiry", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public WalletRes doInquiry(@RequestBody WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
         log.info("/wallet/v1/inquiry");
-        return walletService.doInquiry(req, servletRequest);
+        return walletService.doInquiry(req);
     }
 
     @PostMapping(value = "/history", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public WalletRes getHistory(@RequestBody WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
         log.info("/wallet/v1/history");
-        return walletService.getHistory(req, servletRequest);
+        return walletService.getHistory(req);
     }
 
     @PostMapping(value = "/update/balance", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public WalletRes doUpdateBallance(@RequestBody WalletReq req, HttpServletRequest servletRequest) throws JsonProcessingException {
         log.info("/wallet/v1/update/balance");
-        return walletService.doUpdateBalance(req, servletRequest);
+        return walletService.doUpdateBalance(req);
     }
 
 }

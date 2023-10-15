@@ -17,8 +17,8 @@ public class AuditService {
 
     public <T> void sendAudit(T auditData) {
         log.info("send audit data : {}", auditData);
-        AuditData data = (AuditData) auditData;
         try {
+            AuditData data = (AuditData) auditData;
             kafkaTemplate.send(WalletConstant.AUDIT_TOPIC, data);
             log.info("success send messaging audit !");
         } catch (Exception e) {

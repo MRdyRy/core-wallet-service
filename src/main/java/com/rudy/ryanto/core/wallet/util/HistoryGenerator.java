@@ -79,23 +79,31 @@ public class HistoryGenerator {
         }
     }
 
+    @SuppressWarnings("all")
     public Boolean doPost() {
         log.info("do posting !");
         AtomicReference<Boolean> isSuccess = new AtomicReference<>(Boolean.FALSE);
         try {
-            BigDecimal nominalCredit = new BigDecimal(0);
-            BigDecimal nominalDebit = new BigDecimal(0);
-            hashMapCredit.values().forEach(nominalCredit::add);
-            hashMapDebit.values().forEach(nominalDebit::add);
-            if (nominalCredit.compareTo(nominalDebit) != 0) {
+            final BigDecimal[] nominalCredit = {new BigDecimal(0)};
+            final BigDecimal[] nominalDebit = {new BigDecimal(0)};
+            hashMapCredit.values().forEach(i->{
+                nominalCredit[0] = nominalCredit[0].add(i);
+            });
+            hashMapDebit.values().forEach(i-> {
+                nominalDebit[0] = nominalDebit[0].add(i);
+            });
+            if (nominalCredit[0].compareTo(nominalDebit[0]) != 0) {
                 clearDebitCredit();
                 throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.UNBALANCE.getDescription());
             }
             AtomicInteger i = new AtomicInteger();
             hAll.values().forEach(x -> {
-                walletHistoryDetailRepository.save(constructDetail(x, i.getAndIncrement()));
+                var result = walletHistoryDetailRepository.save(constructDetail(x, i.getAndIncrement()));
+                if(null!=result)
+                    isSuccess.set(Boolean.TRUE);
             });
         } catch (Exception e) {
+            isSuccess.set(Boolean.FALSE);
             log.error("failed to post accounting, caused  : ",e);
             throw new CoreWalletException(WalletConstant.ERROR_DESCRIPTION.GENERAL_ERROR.getDescription());
         } finally {

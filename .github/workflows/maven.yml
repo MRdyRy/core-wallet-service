@@ -36,8 +36,8 @@ jobs:
           DOCKER_USER: ${{secrets.DOCKER_USERNAME}}
           DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
           IMAGE_NAME: serfanrud/core-wallet-service
-          PROJECT_VERSION: ${{env.PROJECT_VERSION}}
-          FIXED_VERSION: ${{env.FIXED_VERSION}}
+          # PROJECT_VERSION: ${{env.PROJECT_VERSION}}
+          # FIXED_VERSION: ${{env.FIXED_VERSION}}
           LATEST_VERSION: latest
           GITHUB_SHA: ${{github.sha}}
     steps:

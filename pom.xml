@@ -16,7 +16,8 @@
 	<properties>
 		<java.version>11</java.version>
 		<spring-cloud.version>2021.0.8</spring-cloud.version>
-		<version-common-config>0.0.1-SNAPSHOT</version-common-config>
+		<version-audit>0.0.1-SNAPSHOT</version-audit>
+		<version-common-config>0.0.2-SNAPSHOT</version-common-config>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -63,7 +64,7 @@
 		<dependency>
 			<groupId>com.rudy.ryanto</groupId>
 			<artifactId>core-audit-service</artifactId>
-			<version>${version-common-config}</version>
+			<version>${version-audit}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

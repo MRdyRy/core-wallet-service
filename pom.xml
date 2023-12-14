@@ -139,6 +139,10 @@
                         <exclude>com/rudy/ryanto/core/wallet/domain/*.class</exclude>
                         <exclude>com/rudy/ryanto/core/wallet/entity/*.java</exclude>
                         <exclude>com/rudy/ryanto/core/wallet/entity/*.class</exclude>
+                        <exclude>com/rudy/ryanto/core/wallet/config/*.java</exclude>
+                        <exclude>com/rudy/ryanto/core/wallet/config/*.class</exclude>
+                        <exclude>com/rudy/ryanto/core/wallet/CoreWalletServiceApplication.java</exclude>
+                        <exclude>com/rudy/ryanto/core/wallet/CoreWalletServiceApplication.class</exclude>
                     </excludes>
                 </configuration>
             </plugin>

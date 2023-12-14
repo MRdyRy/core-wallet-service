@@ -131,6 +131,16 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <excludes>
+                        <exclude>com/rudy/ryanto/core/wallet/exception/*.java</exclude>
+                        <exclude>com/rudy/ryanto/core/wallet/exception/*.class</exclude>
+                        <exclude>com/rudy/ryanto/core/wallet/domain/*.java</exclude>
+                        <exclude>com/rudy/ryanto/core/wallet/domain/*.class</exclude>
+                        <exclude>com/rudy/ryanto/core/wallet/entity/*.java</exclude>
+                        <exclude>com/rudy/ryanto/core/wallet/entity/*.class</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
 
             <plugin>
